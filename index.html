@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Web học tiếng Anh</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Override Tailwind màu cho hài hòa xanh nhạt */
+    h1 {
+      color: #5a78b2; /* xanh tím nhạt */
+    }
+    label {
+      color: #4a6fa5; /* xanh nhẹ cho label */
+    }
+    #progress {
+      color: #7b99d1; /* xanh pastel nhạt */
+    }
+    #question {
+      color: #5a78b2; /* xanh tím nhạt */
+    }
+    #hint {
+      background-color: #e7eefc; /* xanh rất nhạt */
+      border-color: #a2b2e2; /* viền xanh nhẹ */
+      color: #486395; /* chữ xanh vừa phải */
+    }
+    #answer {
+      border-color: #a2b2e2;
+      color: #486395;
+    }
+    #checkBtn {
+      background-color: #7b99d1;
+    }
+    #checkBtn:hover {
+      background-color: #5a78b2;
+    }
+    #result span.text-green-600 {
+      color: #4a90e2; /* xanh dịu */
+    }
+    #result span.text-red-600 {
+      color: #d16a6a; /* đỏ nhạt */
+    }
+    #prevBtn {
+      background-color: #cbd3ea;
+      color: #425a9b;
+    }
+    #prevBtn:hover {
+      background-color: #aab5d8;
+    }
+    #nextBtn {
+      background-color: #7b99d1;
+      color: white;
+    }
+    #nextBtn:hover {
+      background-color: #5a78b2;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-purple-100 via-indigo-100 to-blue-100 min-h-screen flex items-center justify-center p-6">
+
+  <div class="max-w-xl w-full bg-white shadow-2xl rounded-3xl p-8 ring-2 ring-purple-400 ring-opacity-30">
+    <h1 class="text-3xl font-extrabold mb-8 select-none text-center drop-shadow-md">
+      Kiểm tra từ vựng tiếng Anh
+    </h1>
+
+    <!-- Chọn bộ từ vựng -->
+    <div class="mb-6 flex flex-col sm:flex-row items-center gap-4">
+      <label for="vocabSet" class="block text-lg font-semibold min-w-[150px] text-center sm:text-left">
+        Chọn bộ từ vựng:
+      </label>
+      <select id="vocabSet" class="flex-1 border rounded-lg p-3 focus:ring-2 focus:outline-none transition">
+        <option value="">-- Chọn --</option>
+        <option value="part1-1.json">Part 1-1</option>
+        <option value="part1-2.json">Part 1-2</option>
+        <option value="part1-3.json">Part 1-3</option>
+        <option value="part1-4.json">Part 1-4</option>
+        <option value="part1-5.json">Part 1-5</option>
+        <option value="part2-1.json">Part 2-1</option>
+        <option value="part2-2.json">Part 2-2</option>
+        <option value="part2-3.json">Part 2-3</option>
+        <option value="part2-4.json">Part 2-4</option>
+        <option value="part2-5.json">Part 2-5</option>
+      </select>
+      <button
+        id="startBtn"
+        class="bg-blue-200 hover:bg-blue-100 font-semibold rounded-lg px-6 py-3 transition-shadow shadow-md hover:shadow-lg"
+      >
+        Bắt đầu
+      </button>
+
+    </div>
+
+    <!-- Số thứ tự -->
+    <p id="progress" class="mb-4 text-center font-medium tracking-wide select-none"></p>
+
+    <!-- Câu hỏi -->
+    <p
+      class="text-xl font-semibold mb-2 text-center cursor-pointer select-text transition"
+      id="question"
+      title="Bấm để kiểm tra"
+      aria-live="polite"
+    ></p>
+
+    <!-- Gợi ý -->
+    <div
+      id="hint"
+      class="rounded-lg border p-4 mb-6 italic text-sm select-text shadow-sm"
+    ></div>
+
+    <!-- Ô nhập -->
+    <input
+      id="answer"
+      type="text"
+      placeholder="Nhập từ tiếng Anh..."
+      class="w-full border rounded-lg p-3 text-center text-lg placeholder-gray-400 focus:outline-none focus:ring-2 transition"
+      aria-label="Nhập từ tiếng Anh"
+    />
+
+    <!-- Nút kiểm tra -->
+    <button
+      id="checkBtn"
+      class="w-full font-bold py-3 rounded-lg mt-4 transition-shadow shadow-md hover:shadow-lg"
+    >
+      Kiểm tra
+    </button>
+
+    <!-- Kết quả -->
+    <div id="result" class="mt-6 min-h-[2.5rem] text-center text-lg font-semibold select-none"></div>
+
+    <!-- Điều hướng -->
+    <div class="flex justify-between mt-8 select-none">
+      <button
+        id="prevBtn"
+        class="font-semibold px-6 py-3 rounded-lg shadow-sm transition"
+        aria-label="Quay lại từ vựng trước"
+      >
+        ⬅ Quay lại
+      </button>
+      <button
+        id="nextBtn"
+        class="font-semibold px-6 py-3 rounded-lg shadow-md transition"
+        aria-label="Từ vựng tiếp theo"
+      >
+        Tiếp theo ➡
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let vocabList = [];
+    let currentIndex = 0;
+
+    async function loadVocab(fileName) {
+      try {
+        const res = await fetch(fileName);
+        if (!res.ok) throw new Error('Không thể tải file từ vựng.');
+        vocabList = await res.json();
+        currentIndex = 0;
+        showQuestion();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function showQuestion() {
+      if (!vocabList.length) return;
+      const word = vocabList[currentIndex];
+      document.getElementById('question').innerText = word['Ý nghĩa'];
+      document.getElementById('progress').innerText = `Từ ${currentIndex + 1} / ${vocabList.length}`;
+      document.getElementById('hint').innerHTML = `
+        <p><strong>Phiên âm:</strong> ${word['Phiên âm']}</p>
+        <p><strong>Loại từ:</strong> ${word['Loại từ']}</p>
+        <p><strong>Cách nhớ nhanh:</strong> ${word['Cách nhớ nhanh']}</p>
+      `;
+      document.getElementById('answer').value = '';
+      document.getElementById('result').innerText = '';
+      document.getElementById('answer').focus();
+    }
+
+    function checkAnswer() {
+      if (!vocabList.length) return;
+      const word = vocabList[currentIndex];
+      const userAnswer = document.getElementById('answer').value.trim().toLowerCase();
+      const correctAnswer = word['Từ vựng'].toLowerCase();
+      const resultEl = document.getElementById('result');
+      if (!userAnswer) {
+        resultEl.innerHTML = `<span class="text-yellow-600 font-semibold">⚠️ Vui lòng nhập câu trả lời.</span>`;
+        return;
+      }
+      if (userAnswer === correctAnswer) {
+        resultEl.innerHTML = `<span class="text-green-600 flex items-center justify-center gap-2 font-bold">✅ Đúng rồi!</span>`;
+      } else {
+        resultEl.innerHTML = `
+          <span class="text-red-600 flex items-center justify-center gap-2 font-bold">
+            ❌ Sai! Đáp án: <span class="underline">${word['Từ vựng']}</span>
+          </span>
+        `;
+      }
+    }
+
+    // Sự kiện chọn bộ từ
+    document.getElementById('startBtn').addEventListener('click', () => {
+      const selectedFile = document.getElementById('vocabSet').value;
+      if (!selectedFile) {
+        alert('Hãy chọn một bộ từ vựng!');
+        return;
+      }
+      loadVocab(selectedFile);
+    });
+
+    // Click nút kiểm tra
+    document.getElementById('checkBtn').addEventListener('click', checkAnswer);
+
+    // Enter trong ô nhập
+    document.getElementById('answer').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        checkAnswer();
+      }
+    });
+
+    // Click vào nghĩa để kiểm tra
+    document.getElementById('question').addEventListener('click', checkAnswer);
+
+    // Nút tiếp theo
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      if (currentIndex < vocabList.length - 1) {
+        currentIndex++;
+        showQuestion();
+      }
+    });
+
+    // Nút quay lại
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        showQuestion();
+      }
+    });
+  </script>
+</body>
+</html>
